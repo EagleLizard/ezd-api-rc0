@@ -8,9 +8,13 @@ import { logMiddleware } from './lib/middleware/log-middleware';
 import { PostgresClient } from './lib/db/postgres-client';
 
 export async function initServer(): Promise<void> {
-  const client = await PostgresClient.getClient();
-  const res = await client.query('select * from users');
-  console.log(res.rows[0]);
+  try {
+    const client = await PostgresClient.getClient();
+    const res = await client.query('select * from users');
+    console.log(res.rows[0]);
+  } catch(e) {
+    console.error(e);
+  }
 
   return new Promise<void>((resolve, reject) => {
     let app: Express;
