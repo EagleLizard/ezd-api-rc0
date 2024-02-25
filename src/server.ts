@@ -3,8 +3,15 @@ import express, { Express } from 'express';
 
 import { config } from './config';
 import { registerRoutes } from './lib/routes';
+import { logger } from './lib/logger';
+import { logMiddleware } from './lib/middleware/log-middleware';
+import { PostgresClient } from './lib/db/postgres-client';
 
-export function initServer(): Promise<void> {
+export async function initServer(): Promise<void> {
+  const client = await PostgresClient.getClient();
+  const res = await client.query('select * from users');
+  console.log(res.rows[0]);
+
   return new Promise<void>((resolve, reject) => {
     let app: Express;
     let port: number;
@@ -12,12 +19,14 @@ export function initServer(): Promise<void> {
     app = express();
     
     // middleware
+    app.use(logMiddleware);
 
     // routes
     app = registerRoutes(app);
 
     app.listen(port, () => {
-      console.log(`listening on port: ${port}`);
+      // console.log(`listening on port: ${port}`);
+      logger.info(`listening on port: ${port}`);
       resolve();
     });
   });

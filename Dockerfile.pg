@@ -1,0 +1,5 @@
+
+FROM --platform=linux/arm64 postgres:latest
+ENV HOME /home
+# WORKDIR $HOME
+COPY ./init.sql $HOME/.
