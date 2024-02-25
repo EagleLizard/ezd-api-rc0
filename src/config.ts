@@ -7,6 +7,7 @@ const DEFAULT_PORT = 4444;
 
 const config = {
   port: getPort(),
+  POSTGRES_HOST: process.env.POSTGRES_HOST,
   POSTGRES_PORT: getPostgresPort(),
   ENVIRONMENT: process.env.ENVIRONMENT,
   POSTGRES_USER: process.env.POSTGRES_USER,
