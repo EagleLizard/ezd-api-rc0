@@ -8,7 +8,7 @@ export  class PostgresClient {
 
     let pgClientConfig: ClientConfig;
     pgClientConfig = {
-      // host: config.POSTGRES_HOST,
+      host: config.POSTGRES_HOST,
       port: config.POSTGRES_PORT,
       user: config.POSTGRES_USER,
       password: config.POSTGRES_PASSWORD,
