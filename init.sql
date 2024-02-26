@@ -6,6 +6,7 @@ create table users (
 
 create table ping (
   ping_id uuid DEFAULT gen_random_uuid(),
+  src_addr TEXT NOT NULL,
   bytes SMALLINT NOT NULL,
   addr TEXT NOT NULL,
   seq INT NOT NULL,
