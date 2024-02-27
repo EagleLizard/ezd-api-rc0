@@ -1,5 +1,5 @@
 
-import { Pool } from 'pg';
+import { Pool, QueryConfig, QueryResult } from 'pg';
 import { config } from '../../config';
 
 const pgPool = new Pool({
@@ -10,8 +10,15 @@ const pgPool = new Pool({
   database: config.POSTGRES_DB,
 })
 export  class PostgresClient {
-  static async getClient() {
+  private static async getClient() {
     const client = await pgPool.connect();
     return client;
+  }
+
+  static async query<T extends any[], V extends any[]>(query: string | QueryConfig<T[]>, values?: V): Promise<QueryResult> {
+    let client = await PostgresClient.getClient();
+    let queryRes = await client.query(query, values);
+    client.release();
+    return queryRes;
   }
 }

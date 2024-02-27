@@ -35,13 +35,12 @@ export class PingService {
   static async getAddrByValue(addr: string): Promise<PingAddrDto | undefined> {
     let queryParts: string[];
     let queryStr: string;
-    const pgClient = await PostgresClient.getClient();
     queryParts = [
       `select * from ping_addr pa`,
       `where pa.addr = '${addr}'`,
     ];
     queryStr = queryParts.join(' ');
-    const queryRes = await pgClient.query(queryStr);
+    const queryRes = await PostgresClient.query(queryStr);
     return queryRes.rows[0];
   }
 
@@ -65,14 +64,13 @@ export class PingService {
       }
       : parseStartParam(params.start)
     ;
-    const pgClient = await PostgresClient.getClient();
     queryParts = [
       'select * from ping p',
       `where p.created_at BETWEEN NOW() - INTERVAL '${startParam.value} ${startParam.unit}' AND NOW()`,
       `order by p.created_at`
     ];
     queryStr = queryParts.join(' ');
-    const queryRes = await pgClient.query(queryStr);
+    const queryRes = await PostgresClient.query(queryStr);
     console.log('queryRes:');
     console.log(queryRes);
     pingDtos = queryRes.rows.map(PingDto.deserialize);
