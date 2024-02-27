@@ -14,9 +14,11 @@ import { z } from 'zod';
 
 const PingDtoSchema = z.object({
   ping_id: z.string(),
-  src_addr: z.string(),
+  // src_addr: z.string(),
+  src_addr_id: z.number(),
   bytes: z.number(),
-  addr: z.string(),
+  // addr: z.string(),
+  addr_id: z.number(),
   seq: z.number(),
   ttl: z.number(),
   time: z.number(),
@@ -29,9 +31,11 @@ type PingDtoType = z.infer<typeof PingDtoSchema>;
 export class PingDto implements PingDtoType {
   constructor(
     public ping_id: string,
-    public src_addr: string,
+    // public src_addr: string,
+    public src_addr_id: number,
     public bytes: number,
-    public addr: string,
+    // public addr: string,
+    public addr_id: number,
     public seq: number,
     public ttl: number,
     public time: number,
@@ -44,9 +48,9 @@ export class PingDto implements PingDtoType {
     parsedPing = PingDtoSchema.parse(rawPing);
     return new PingDto(
       parsedPing.ping_id,
-      parsedPing.src_addr,
+      parsedPing.src_addr_id,
       parsedPing.bytes,
-      parsedPing.addr,
+      parsedPing.addr_id,
       parsedPing.seq,
       parsedPing.ttl,
       parsedPing.time,
