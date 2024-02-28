@@ -1,18 +1,20 @@
 
 create table users (
   id INT PRIMARY KEY NOT NULL, 
-  name TEXT NOT NULL
+  name TEXT NOT NULL,
+
+  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 
 create table ping_addr (
-  ping_addr_id SERIAL,
+  ping_addr_id SERIAL PRIMARY KEY,
   addr TEXT NOT NULL,
 
-  PRIMARY KEY (ping_addr_id)
+  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 
 create table ping (
-  ping_id uuid DEFAULT gen_random_uuid(),
+  ping_id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
   -- src_addr TEXT NOT NULL,
   src_addr_id INT references ping_addr(ping_addr_id) NOT NULL,
   bytes SMALLINT NOT NULL,
@@ -23,9 +25,7 @@ create table ping (
   time float(32) NOT NULL,
   time_unit TEXT NOT NULL,
 
-  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-
-  PRIMARY KEY (ping_id)
+  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 
 insert into users values (

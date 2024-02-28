@@ -1,4 +1,5 @@
 
+import { getISOString } from '../../util/datetime-util';
 import { isString } from '../../util/validate-primitives';
 import { PostgresClient } from '../db/postgres-client';
 import { PingAddrDto } from '../models/ping-addr-dto';
@@ -44,8 +45,24 @@ export class PingService {
     return queryRes.rows[0];
   }
 
+  static async getLastPing(): Promise<PingDto> {
+    let lastPing: PingDto;
+    let queryStr: string;
+    queryStr = [
+      'select * from ping p',
+      'order by p.created_at desc',
+      'limit 1'
+    ].join(' ');
+
+    const queryRes = await PostgresClient.query(queryStr);
+    lastPing = PingDto.deserialize(queryRes.rows[0]);
+
+    return lastPing;
+  }
+
   static async getPings(params: GetPingsParams): Promise<GetPingsResult> {
     let pingDtos: PingDto[];
+    let lastPing: PingDto;
     let avgTime: number;
     let minTime: number;
     let maxTime: number;
@@ -64,15 +81,22 @@ export class PingService {
       }
       : parseStartParam(params.start)
     ;
+
+    lastPing = await this.getLastPing();
+
+    let lastPingTimestamp = getISOString(lastPing.created_at);
+    
     queryParts = [
       'select * from ping p',
-      `where p.created_at BETWEEN NOW() - INTERVAL '${startParam.value} ${startParam.unit}' AND NOW()`,
-      `order by p.created_at`
+      `where p.created_at BETWEEN
+        '${lastPingTimestamp}'::timestamp - INTERVAL '${startParam.value} ${startParam.unit}'
+        AND
+        '${lastPingTimestamp}'::timestamp`,
+      `order by p.created_at`,
+      `limit 1000`,
     ];
     queryStr = queryParts.join(' ');
     const queryRes = await PostgresClient.query(queryStr);
-    console.log('queryRes:');
-    console.log(queryRes);
     pingDtos = queryRes.rows.map(PingDto.deserialize);
     pingCount = pingDtos.length;
     minTime = Infinity;
