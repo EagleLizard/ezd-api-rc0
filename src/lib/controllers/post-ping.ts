@@ -1,5 +1,5 @@
 import { Request, Response } from 'express';
-import { InsertPingOpts, PingDto } from '../models/ping-dto';
+import { InsertPingOpts } from '../models/ping-dto';
 import { isObject, isString } from '../../util/validate-primitives';
 import { PingService } from '../services/ping-service';
 
