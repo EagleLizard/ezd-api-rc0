@@ -1,9 +1,10 @@
 
 import { getISOString } from '../../util/datetime-util';
-import { isString } from '../../util/validate-primitives';
+import { isNumber, isString } from '../../util/validate-primitives';
 import { PostgresClient } from '../db/postgres-client';
 import { PingAddrDto } from '../models/ping-addr-dto';
-import { PingDto } from '../models/ping-dto';
+import { InsertPingOpts, PingDto } from '../models/ping-dto';
+import { PingStatDto } from '../models/ping-stat-dto';
 
 export type GetPingsResult = {
   avg_time_ms: number;
@@ -33,31 +34,24 @@ export const TIME_UNIT_MAP: Record<TIME_UNIT, string> = {
 
 export class PingService {
 
-  static async getAddrByValue(addr: string): Promise<PingAddrDto | undefined> {
-    let queryParts: string[];
+  static async getPingStats(): Promise<PingStatDto[]> {
     let queryStr: string;
-    queryParts = [
-      `select * from ping_addr pa`,
-      `where pa.addr = '${addr}'`,
-    ];
-    queryStr = queryParts.join(' ');
+    let pingStatDtos: PingStatDto[];
+    queryStr = `
+      select date_trunc('minute', p.created_at) as time_bucket,
+        count(p.ping_id),
+        round(avg(p."time")*1000)/1000 as avg,
+        max(p."time"),
+        percentile_cont(0.5) within group (order by p.time) as median
+      from ping p 
+      group by time_bucket
+      order by time_bucket desc
+    `;
     const queryRes = await PostgresClient.query(queryStr);
-    return queryRes.rows[0];
-  }
-
-  static async getLastPing(): Promise<PingDto> {
-    let lastPing: PingDto;
-    let queryStr: string;
-    queryStr = [
-      'select * from ping p',
-      'order by p.created_at desc',
-      'limit 1'
-    ].join(' ');
-
-    const queryRes = await PostgresClient.query(queryStr);
-    lastPing = PingDto.deserialize(queryRes.rows[0]);
-
-    return lastPing;
+    pingStatDtos = queryRes.rows.map((row) => {
+      return PingStatDto.deserialize(row);
+    });
+    return pingStatDtos;
   }
 
   static async getPings(params: GetPingsParams): Promise<GetPingsResult> {
@@ -127,6 +121,95 @@ export class PingService {
       pings: pingDtos,
     };
     return getPingsRes;
+  }
+
+  static async getLastPing(): Promise<PingDto> {
+    let pingDto: PingDto;
+    let queryStr: string;
+    queryStr = `
+      select * from ping p
+      order by p.created_at desc
+      limit 1
+    `;
+    const queryRes = await PostgresClient.query(queryStr);
+    pingDto = PingDto.deserialize(queryRes.rows[0]);
+    return pingDto;
+  }
+
+  static async insertPing(opts: InsertPingOpts) {
+    let srcAddrId: number | undefined;
+    let addrId: number | undefined;
+
+    let col_names: string[];
+    let col_names_str: string;
+    let col_nums_str: string;
+
+    let queryStr: string;
+    let queryParams: [ number, number, number, number, number, number, string ];
+
+    srcAddrId = await this.getAddrIdByVal(opts.src_addr);
+    if(srcAddrId === undefined) {
+      srcAddrId = await this.insertAddr(opts.src_addr);
+    }
+    addrId = await this.getAddrIdByVal(opts.addr);
+    if(addrId === undefined) {
+      addrId = await this.insertAddr(opts.addr);
+    }
+
+    col_names = [
+      'src_addr_id',
+      'bytes',
+      'addr_id',
+      'seq',
+      'ttl',
+      'time',
+      'time_unit',
+    ];
+    col_nums_str = col_names.map((col_name, idx) => {
+      return `$${idx + 1}`;
+    }).join(', ');
+    col_names_str = col_names.join(', ');
+    queryStr = `INSERT INTO ping (${col_names_str}) VALUES(${col_nums_str})`;
+    queryParams = [
+      srcAddrId,
+      opts.bytes,
+      addrId,
+      opts.seq,
+      opts.ttl,
+      opts.time,
+      opts.time_unit,
+    ];
+    return PostgresClient.query(queryStr, queryParams);
+  }
+
+  static async getAddrIdByVal(addr: string): Promise<number | undefined> {
+    let addrDto = await this.getAddrByVal(addr);
+    return addrDto?.ping_addr_id;
+  }
+
+  static async getAddrByVal(addr: string): Promise<PingAddrDto | undefined> {
+    let addrQueryRes = await PostgresClient.query([
+      'select * from ping_addr pa',
+      `where pa.addr = '${addr}'`,
+    ].join(' '));
+    return addrQueryRes.rows[0] === undefined
+      ? undefined
+      : PingAddrDto.deserialize(addrQueryRes.rows[0])
+    ;
+  }
+
+  static async insertAddr(addr: string): Promise<number> {
+    let rawAddrId: number | undefined;
+    let insertQueryRes = await PostgresClient.query([
+      'insert into ping_addr (addr) values($1)  returning *'
+    ].join(' '), [
+      addr,
+    ]);
+    rawAddrId = insertQueryRes.rows[0]?.ping_addr_id;
+    if(!isNumber(rawAddrId)) {
+      throw new Error(`could not insert addr: ${addr}`);
+    }
+    return rawAddrId;
   }
 }
 

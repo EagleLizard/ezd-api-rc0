@@ -20,7 +20,7 @@ export async function initServer(): Promise<void> {
     
     // middleware
     app.use(logMiddleware);
-
+    app.use(express.json());
     // routes
     app = registerRoutes(app);
 
