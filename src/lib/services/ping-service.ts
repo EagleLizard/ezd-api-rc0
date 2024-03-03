@@ -54,6 +54,25 @@ export class PingService {
     return pingStatDtos;
   }
 
+  static async getAddrPingStats(addrId: string) {
+    let queryStr: string;
+    let pingStatDtos: PingStatDto[];
+    queryStr = `
+      select date_trunc('minute', p.created_at) as time_bucket,
+        count(p.ping_id),
+        round(avg(p."time")*1000)/1000 as avg,
+        max(p."time"),
+        percentile_cont(0.5) within group (order by p.time) as median
+      from ping p 
+        where p.addr_id = $1
+      group by time_bucket
+      order by time_bucket desc
+    `;
+    const queryRes = await PostgresClient.query(queryStr, [ addrId ]);
+    pingStatDtos = queryRes.rows.map(PingStatDto.deserialize);
+    return pingStatDtos;
+  }
+
   static async getPings(params: GetPingsParams): Promise<GetPingsResult> {
     let pingDtos: PingDto[];
     let lastPing: PingDto;
@@ -180,6 +199,41 @@ export class PingService {
       opts.time_unit,
     ];
     return PostgresClient.query(queryStr, queryParams);
+  }
+
+  static async getPingsByAddr(addrId: string): Promise<PingDto[]> {
+    let pingDtos: PingDto[];
+    let queryStr: string;
+    queryStr = `
+      select * from ping p
+        where p.addr_id = $1
+    `;
+    const queryRes = await PostgresClient.query(queryStr, [ addrId ]);
+    pingDtos = queryRes.rows.map(PingDto.deserialize);
+    return pingDtos;
+  }
+
+  static async getAddrs(): Promise<PingAddrDto[]> {
+    let addrDtos: PingAddrDto[];
+    let queryStr: string;
+    queryStr = `
+      select * from ping_addr
+    `;
+    const queryRes = await PostgresClient.query(queryStr);
+    addrDtos = queryRes.rows.map(PingAddrDto.deserialize);
+    return addrDtos;
+  }
+
+  static async getAddrById(id: string): Promise<PingAddrDto> {
+    let addrDto: PingAddrDto;
+    let queryStr: string;
+    queryStr = `
+      select * from ping_addr p
+        where p.ping_addr_id = $1
+    `;
+    const queryRes = await PostgresClient.query(queryStr, [ id ]);
+    addrDto = PingAddrDto.deserialize(queryRes.rows[0]);
+    return addrDto;
   }
 
   static async getAddrIdByVal(addr: string): Promise<number | undefined> {
