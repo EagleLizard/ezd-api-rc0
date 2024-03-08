@@ -38,7 +38,7 @@ export class PingService {
     let queryStr: string;
     let pingStatDtos: PingStatDto[];
     queryStr = `
-      select date_trunc('minute', p.created_at) as time_bucket,
+      select date_bin('5 min', p.created_at, '2001-9-11') as time_bucket,
         count(p.ping_id),
         round(avg(p."time")*1000)/1000 as avg,
         max(p."time"),
@@ -48,6 +48,7 @@ export class PingService {
       order by time_bucket desc
     `;
     const queryRes = await PostgresClient.query(queryStr);
+    console.log(queryRes.rows[0]);
     pingStatDtos = queryRes.rows.map((row) => {
       return PingStatDto.deserialize(row);
     });
@@ -58,7 +59,7 @@ export class PingService {
     let queryStr: string;
     let pingStatDtos: PingStatDto[];
     queryStr = `
-      select date_trunc('minute', p.created_at) as time_bucket,
+      select date_bin('5 min', p.created_at, '2001-9-11') as time_bucket,
         count(p.ping_id),
         round(avg(p."time")*1000)/1000 as avg,
         max(p."time"),
