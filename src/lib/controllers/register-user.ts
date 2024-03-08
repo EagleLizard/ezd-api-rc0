@@ -1,0 +1,47 @@
+import { Request, Response } from 'express';
+import { isString } from '../../util/validate-primitives';
+import { UserService } from '../services/user-service';
+import { PG_ERRORS, PG_ERROR_ENUM } from '../db/postgres-constants';
+import { ValidationError } from '../models/error/validation-error';
+
+export async function registerUser(req: Request, res: Response) {
+  let userName: string;
+  let email: string;
+  let password: string;
+  if(
+    !isString(req.body.userName)
+    || !isString(req.body.email)
+    || !isString(req.body.password)
+  ) {
+    res.status(403).end();
+    return
+  }
+  userName = req.body.userName;
+  email = req.body.email;
+  password = req.body.password;
+  let registerUserRes = await UserService.registerUser(userName, email, password);
+  if(registerUserRes !== undefined) {
+    let errMessage: string;
+    let pgError: PG_ERROR_ENUM | undefined;
+    errMessage = 'Error creating user';
+    if(
+      isString(registerUserRes.code)
+      && ((pgError = PG_ERRORS[registerUserRes.code]) !== undefined)
+    ) {
+      switch(pgError) {
+        case PG_ERROR_ENUM.DUPLICATE_VALUE:
+          errMessage = `Username '${userName}' already exists.`;
+          break;
+      }
+    } else {
+      if(registerUserRes instanceof ValidationError) {
+        errMessage = registerUserRes.message;
+      }
+    }
+    res.status(403).send({
+      errMessage,
+    });
+    return;
+  }
+  res.status(200).end();
+}

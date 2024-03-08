@@ -1,7 +1,20 @@
 
+CREATE EXTENSION pgcrypto;
+
 create table users (
-  id INT PRIMARY KEY NOT NULL, 
-  name TEXT NOT NULL,
+  user_id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
+  user_name TEXT NOT NULL UNIQUE,
+  email TEXT NOT NULL UNIQUE,
+
+  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
+create table passwords (
+  password_id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
+  password_hash TEXT NOT NULL,
+  salt TEXT NOT NULL,
+  
+  user_id uuid references users(user_id) NOT NULL,
 
   created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
@@ -28,7 +41,4 @@ create table ping (
   created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 
-insert into users values (
-  1,
-  'ezd'
-);
+

@@ -39,7 +39,8 @@ export async function initServer(): Promise<void> {
   });
 
   process.on('unhandledRejection', (reason) => {
-    logger.info(`Unhandled rejection: ${reason}`);
+    console.error(reason);
+    logger.error(`Unhandled rejection: ${reason}`);
   });
 }
 
