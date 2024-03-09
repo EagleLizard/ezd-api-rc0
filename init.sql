@@ -19,9 +19,12 @@ create table passwords (
   created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 
+create type addr_type_enum AS ENUM ('local', 'global');
+
 create table ping_addr (
   ping_addr_id SERIAL PRIMARY KEY,
-  addr TEXT NOT NULL,
+  addr TEXT NOT NULL UNIQUE,
+  addr_type addr_type_enum NOT NULL,
 
   created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
@@ -42,3 +45,39 @@ create table ping (
 );
 
 
+/*
+
+2
+4
+10
+11
+
+SRC (e.g. local)
+1
+3
+5
+12
+
+1
+2
+3
+4
+5
+10
+11
+12
+
+*/
+
+
+/*
+
+2
+4
+5
+
+SRC (e.g local)
+1
+3
+
+*/

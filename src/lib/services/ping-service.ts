@@ -2,9 +2,10 @@
 import { getISOString } from '../../util/datetime-util';
 import { isNumber, isString } from '../../util/validate-primitives';
 import { PostgresClient } from '../db/postgres-client';
-import { PingAddrDto } from '../models/ping-addr-dto';
+import { ADDR_TYPE_ENUM, PingAddrDto } from '../models/ping-addr-dto';
 import { InsertPingOpts, PingDto } from '../models/ping-dto';
 import { PingStatDto } from '../models/ping-stat-dto';
+import { NetService } from './net-service';
 
 export type GetPingsResult = {
   avg_time_ms: number;
@@ -37,18 +38,9 @@ export class PingService {
   static async getPingStats(): Promise<PingStatDto[]> {
     let queryStr: string;
     let pingStatDtos: PingStatDto[];
-    queryStr = `
-      select date_bin('5 min', p.created_at, '2001-9-11') as time_bucket,
-        count(p.ping_id),
-        round(avg(p."time")*1000)/1000 as avg,
-        max(p."time"),
-        percentile_cont(0.5) within group (order by p.time) as median
-      from ping p 
-      group by time_bucket
-      order by time_bucket desc
-    `;
+    queryStr = getTimeBucketQueryStr();
     const queryRes = await PostgresClient.query(queryStr);
-    console.log(queryRes.rows[0]);
+
     pingStatDtos = queryRes.rows.map((row) => {
       return PingStatDto.deserialize(row);
     });
@@ -58,17 +50,8 @@ export class PingService {
   static async getAddrPingStats(addrId: string) {
     let queryStr: string;
     let pingStatDtos: PingStatDto[];
-    queryStr = `
-      select date_bin('5 min', p.created_at, '2001-9-11') as time_bucket,
-        count(p.ping_id),
-        round(avg(p."time")*1000)/1000 as avg,
-        max(p."time"),
-        percentile_cont(0.5) within group (order by p.time) as median
-      from ping p 
-        where p.addr_id = $1
-      group by time_bucket
-      order by time_bucket desc
-    `;
+    queryStr = getTimeBucketQueryStr(addrId);
+
     const queryRes = await PostgresClient.query(queryStr, [ addrId ]);
     pingStatDtos = queryRes.rows.map(PingStatDto.deserialize);
     return pingStatDtos;
@@ -254,18 +237,70 @@ export class PingService {
   }
 
   static async insertAddr(addr: string): Promise<number> {
+    let queryStr: string;
+    let queryParams: [ string, ADDR_TYPE_ENUM ]
     let rawAddrId: number | undefined;
-    let insertQueryRes = await PostgresClient.query([
-      'insert into ping_addr (addr) values($1)  returning *'
-    ].join(' '), [
+    let addr_type: ADDR_TYPE_ENUM;
+
+    let col_names: string[];
+    let col_names_str: string;
+    let col_nums_str: string;
+
+    addr_type = NetService.getNetworkType(addr);
+
+    col_names = [
+      'addr',
+      'addr_type',
+    ];
+    col_names_str = col_names.join(', ');
+    col_nums_str = col_names.map((col_name, idx) => {
+      return `$${idx + 1}`;
+    }).join(', ');
+    queryStr = `
+      insert into ping_addr (${col_names_str}) values(${col_nums_str})  returning *
+    `;
+    queryParams = [
       addr,
-    ]);
+      addr_type,
+    ];
+    let insertQueryRes = await PostgresClient.query(queryStr, queryParams);
     rawAddrId = insertQueryRes.rows[0]?.ping_addr_id;
     if(!isNumber(rawAddrId)) {
       throw new Error(`could not insert addr: ${addr}`);
     }
     return rawAddrId;
   }
+}
+
+function getTimeBucketQueryStr(addrId?: string) {
+  let baseQuery: string;
+  let gorupByOrderByStr: string;
+  let queryStr: string;
+  baseQuery = `
+    select date_bin('5 min', p.created_at, '2001-9-11') as time_bucket,
+      count(p.ping_id),
+      round(avg(p."time")*1000)/1000 as avg,
+      max(p."time"),
+      percentile_cont(0.5) within group (order by p.time) as median
+    from ping p 
+  `;
+  gorupByOrderByStr = `
+    group by time_bucket
+    order by time_bucket desc
+  `;
+  if(!isString(addrId)) {
+    queryStr = [
+      baseQuery,
+      gorupByOrderByStr,
+    ].join('\n');
+  } else {
+    queryStr = [
+      baseQuery,
+      `where p.addr_id = $1`,
+      gorupByOrderByStr,
+    ].join('\n');
+  }
+  return queryStr;
 }
 
 
