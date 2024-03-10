@@ -13,7 +13,7 @@ import { z } from 'zod';
 */
 
 const PingDtoSchema = z.object({
-  ping_id: z.string().optional(),
+  ping_id: z.number().optional(),
   // src_addr: z.string(),
   src_addr_id: z.number(),
   bytes: z.number(),
@@ -78,7 +78,7 @@ export class PingDto implements PingDtoType {
     // public addr: string,
     public addr_id: number,
     public created_at: Date,
-    public ping_id?: string,
+    public ping_id?: number,
   ) {}
 
   static deserialize(rawPing: unknown): PingDto {

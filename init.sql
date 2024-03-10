@@ -30,7 +30,8 @@ create table ping_addr (
 );
 
 create table ping (
-  ping_id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
+  -- ping_id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
+  ping_id BIGSERIAL PRIMARY KEY,
   -- src_addr TEXT NOT NULL,
   src_addr_id INT references ping_addr(ping_addr_id) NOT NULL,
   bytes SMALLINT NOT NULL,
