@@ -3,6 +3,7 @@ import { getISOString } from '../../util/datetime-util';
 import { isNumber, isString } from '../../util/validate-primitives';
 import { PostgresClient } from '../db/postgres-client';
 import { ADDR_TYPE_ENUM, PingAddrDto } from '../models/ping-addr-dto';
+import { TimeBucketUnit } from '../models/ping-args';
 import { InsertPingOpts, PingDto } from '../models/ping-dto';
 import { PingStatDto } from '../models/ping-stat-dto';
 import { NetService } from './net-service';
@@ -20,6 +21,11 @@ type GetPingsParams = {
   start?: string | undefined;
 };
 
+type GetPingStatsParams = {
+  addrType?: ADDR_TYPE_ENUM;
+  bucketVal?: number;
+  bucketUnit?: TimeBucketUnit;
+};
 type StartParam = {
   unit: TIME_UNIT;
   value: number;
@@ -35,10 +41,14 @@ export const TIME_UNIT_MAP: Record<TIME_UNIT, string> = {
 
 export class PingService {
 
-  static async getPingStats(): Promise<PingStatDto[]> {
+  static async getPingStats(params: GetPingStatsParams = {}): Promise<PingStatDto[]> {
     let queryStr: string;
     let pingStatDtos: PingStatDto[];
-    queryStr = getTimeBucketQueryStr();
+    queryStr = getTimeBucketQueryStr({
+      addrType: params.addrType,
+      dateBinVal: params.bucketVal,
+      dateBinUnit: params.bucketUnit,
+    });
     const queryRes = await PostgresClient.query(queryStr);
 
     pingStatDtos = queryRes.rows.map((row) => {
@@ -50,7 +60,9 @@ export class PingService {
   static async getAddrPingStats(addrId: string) {
     let queryStr: string;
     let pingStatDtos: PingStatDto[];
-    queryStr = getTimeBucketQueryStr(addrId);
+    queryStr = getTimeBucketQueryStr({
+      addrId,
+    });
 
     const queryRes = await PostgresClient.query(queryStr, [ addrId ]);
     pingStatDtos = queryRes.rows.map(PingStatDto.deserialize);
@@ -272,34 +284,52 @@ export class PingService {
   }
 }
 
-function getTimeBucketQueryStr(addrId?: string) {
+type GetTimeBucketQueryStrOpts = {
+  addrId?: string;
+  addrType?: ADDR_TYPE_ENUM;
+  dateBinVal?: number;
+  dateBinUnit?: TimeBucketUnit;
+};
+
+function getTimeBucketQueryStr(opts: GetTimeBucketQueryStrOpts = {}) {
+  let dateBinVal: number;
+  let dateBinUnit: TimeBucketUnit;
   let baseQuery: string;
   let gorupByOrderByStr: string;
+  let queryStrParts: string[];
   let queryStr: string;
+
+  dateBinVal = opts.dateBinVal ?? 5;
+  dateBinUnit = opts.dateBinUnit ?? 'min';
+
   baseQuery = `
-    select date_bin('5 min', p.created_at, '2001-9-11') as time_bucket,
+    select date_bin('${dateBinVal} ${dateBinUnit}', p.created_at, '2001-9-11') as time_bucket,
       count(p.ping_id),
       round(avg(p."time")*1000)/1000 as avg,
       max(p."time"),
       percentile_cont(0.5) within group (order by p.time) as median
-    from ping p 
+    from ping p
   `;
   gorupByOrderByStr = `
     group by time_bucket
     order by time_bucket desc
   `;
-  if(!isString(addrId)) {
-    queryStr = [
-      baseQuery,
-      gorupByOrderByStr,
-    ].join('\n');
-  } else {
-    queryStr = [
-      baseQuery,
-      `where p.addr_id = $1`,
-      gorupByOrderByStr,
-    ].join('\n');
+  queryStrParts = [
+    baseQuery,
+  ];
+  if(opts.addrType !== undefined) {
+    queryStrParts.push(`
+      left join ping_addr pr on pr.ping_addr_id = p.addr_id
+    where pr.addr_type = '${opts.addrType}'
+    `);
   }
+  if(isString(opts.addrId)) {
+    queryStrParts.push(`where p.addr_id = $1`);  
+  }
+  queryStrParts.push(gorupByOrderByStr);
+
+  queryStr = queryStrParts.join('\n');
+
   return queryStr;
 }
 
