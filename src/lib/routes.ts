@@ -26,7 +26,7 @@ export function registerRoutes(app: Express): Express {
   app.get('/v1/addr/:id/ping/stats', getAddrPingStats);
   app.get('/v1/addrs', getAddrs);
 
-  app.post('/v1/login', postUserLogin);
+  app.post('/v1/user/login', postUserLogin);
   app.post('/v1/users/register', registerUser);
 
   return app;

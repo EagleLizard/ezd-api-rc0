@@ -24,3 +24,36 @@ export function validateEmailAddress(email: string): Error | undefined {
     return new ValidationError(`Invalid domain part: '${domainPart}'`);
   }
 }
+
+export function validateUserName(userName: string): Error | undefined {
+  let userNameRx = /^[a-zA-Z][a-zA-Z0-9_]+$/;
+  let validUserName: boolean;
+  validUserName = (
+    userNameRx.test(userName)
+    && (userName.length > 2)
+  );
+  if(!validUserName) {
+    return new ValidationError('Invalid username');
+  }
+  return;
+}
+
+export function validatePassword(password: string): Error | undefined {
+  let specialChars = '`~!@#$%^&*()_=+';
+  let passwordRx = new RegExp(`[a-zA-Z0-9${specialChars}]+`);
+  let specialCharsRx = new RegExp(`[${specialChars}]`);
+  let numbersRx = /[0-9]/;
+  let validPassword: boolean;
+
+  validPassword = (
+    (password.length > 7)
+    && passwordRx.test(password)
+    && specialCharsRx.test(password)
+    && /[a-zA-Z]/.test(password)
+    // && numbersRx.test(password)
+  );
+  if(!validPassword) {
+    return new ValidationError('Invalid password');
+  }
+  return;
+}

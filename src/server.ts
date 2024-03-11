@@ -1,12 +1,13 @@
 
+import { Server } from 'http';
 import express, { Express } from 'express';
+import cors from 'cors';
 
 import { config } from './config';
 import { registerRoutes } from './lib/routes';
 import { logger } from './lib/logger';
 import { logMiddleware } from './lib/middleware/log-middleware';
 import { EXIT_SIGNAL_CODES } from './constants';
-import { Server } from 'http';
 
 export async function initServer(): Promise<void> {
   let initServerPromise: Promise<void>;
@@ -21,6 +22,7 @@ export async function initServer(): Promise<void> {
     // middleware
     app.use(logMiddleware);
     app.use(express.json());
+    app.use(cors());
     // routes
     app = registerRoutes(app);
 

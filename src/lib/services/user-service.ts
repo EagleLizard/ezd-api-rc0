@@ -11,7 +11,7 @@ import { ValidationError } from '../models/error/validation-error';
 
 export class UserService {
 
-  static async getUserByName(userName: string): Promise<UserDto> {
+  static async getUserByName(userName: string): Promise<UserDto | undefined> {
     let userDto: UserDto;
     let queryStr: string;
     queryStr = `
@@ -19,6 +19,9 @@ export class UserService {
         where u.user_name = $1
     `;
     let queryRes = await PostgresClient.query(queryStr, [ userName ]);
+    if(queryRes.rows[0] === undefined) {
+      return;
+    }
     userDto = UserDto.deserialize(queryRes.rows[0]);
     return userDto;
   }
