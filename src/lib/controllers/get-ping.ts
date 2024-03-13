@@ -2,6 +2,7 @@
 import { Request, Response } from 'express';
 import { isObject, isString } from '../../util/validate-primitives';
 import { GetPingsResult, PingService } from '../services/ping-service';
+import { logger } from '../logger';
 
 
 
@@ -21,6 +22,8 @@ export async function getPings(req: Request, res: Response) {
     });
   } catch(e) {
     let errMsg: string;
+    console.error(e);
+    logger.error(e);
     errMsg = (isObject(e) && isString(e.message))
       ? e.message
       : `params: ${queryParams}`

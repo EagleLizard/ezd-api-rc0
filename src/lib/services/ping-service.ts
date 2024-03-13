@@ -90,7 +90,6 @@ export class PingService {
       }
       : parseStartParam(params.start)
     ;
-
     lastPing = await this.getLastPing();
 
     let lastPingTimestamp = getISOString(lastPing.created_at);
@@ -367,8 +366,5 @@ function parseStartParam(rawStartParam: unknown): StartParam {
     unit,
     value: time,
   };
-  console.log({
-    startParam,
-  });
   return startParam;
 }

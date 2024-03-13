@@ -11,6 +11,23 @@ import { ValidationError } from '../models/error/validation-error';
 
 export class UserService {
 
+  static async authenticateUser(userName: string, passwordStr: string): Promise<UserDto | undefined> {
+    let user: UserDto | undefined;
+    let password: PasswordDto;
+    let passwordValid: boolean;
+
+    user = await UserService.getUserByName(userName);
+    if(user === undefined) {
+      return;
+    }
+    password = await UserService.getPasswordByUserId(user.user_id);
+    passwordValid = UserService.checkPassword(passwordStr, password);
+    if(!passwordValid) {
+      return undefined;
+    }
+    return user;
+  }
+
   static async getUserByName(userName: string): Promise<UserDto | undefined> {
     let userDto: UserDto;
     let queryStr: string;

@@ -13,11 +13,41 @@ const config = {
   POSTGRES_USER: process.env.POSTGRES_USER,
   POSTGRES_PASSWORD: process.env.POSTGRES_PASSWORD,
   POSTGRES_DB: process.env.POSTGRES_DB,
+  SESSION_SECRET: getSessionSecret(),
+  EZD_JWT_SECRET: getJwtSecret(),
+  EZD_WEB_ORIGIN: getEzdWebOrigin(),
 };
 
 export {
   config,
 };
+
+function getSessionSecret(): string {
+  let rawSessionSecret: unknown;
+  rawSessionSecret = process.env.SESSION_SECRET;
+  if(!isString(rawSessionSecret)) {
+    throw new Error('Invalid SESSION_SECRET');
+  }
+  return rawSessionSecret;
+}
+
+function getEzdWebOrigin(): string {
+  let rawOrigin: unknown;
+  rawOrigin = process.env.EZD_WEB_ORIGIN;
+  if(!isString(rawOrigin)) {
+    throw new Error('Invalid EZD_WEB_ORIGIN');
+  }
+  return rawOrigin;
+}
+
+function getJwtSecret(): string {
+  let rawSecret: unknown;
+  rawSecret = process.env.EZD_JWT_SECRET;
+  if(!isString(rawSecret)) {
+    throw new Error(`Invalid EZD_JWT_SECRET`);
+  }
+  return rawSecret;
+}
 
 function getPostgresPort(): number {
   let rawPort: unknown;

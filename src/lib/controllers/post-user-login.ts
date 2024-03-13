@@ -1,16 +1,16 @@
 
 import { Request, Response } from 'express';
 import { isString } from '../../util/validate-primitives';
-import { PasswordDto } from '../models/password-dto';
 import { UserDto } from '../models/user-dto';
 import { UserService } from '../services/user-service';
+import { AuthService } from '../services/auth-service';
 
 export async function postUserLogin(req: Request, res: Response) {
   let userName: string;
   let passwordStr: string;
   let user: UserDto | undefined;
-  let password: PasswordDto;
-  let passwordValid: boolean;
+  let token: string | undefined;
+
   if(
     !isString(req.body.userName)
     || !isString(req.body.password)
@@ -20,17 +20,17 @@ export async function postUserLogin(req: Request, res: Response) {
   }
   userName = req.body.userName;
   passwordStr = req.body.password;
-  user = await UserService.getUserByName(userName);
+  user = await UserService.authenticateUser(userName, passwordStr);
   if(user === undefined) {
     res.status(403).send();
     return;
   }
-  password = await UserService.getPasswordByUserId(user.user_id);
-
-  passwordValid = UserService.checkPassword(passwordStr, password);
-  if(!passwordValid) {
+  token = await AuthService.createJwtSession(user);
+  if(token === undefined) {
     res.status(403).send();
     return;
   }
-  res.status(200).send();
+  res.status(200).send({
+    token,
+  });
 }

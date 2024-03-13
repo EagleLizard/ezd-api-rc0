@@ -42,7 +42,7 @@ export function validatePassword(password: string): Error | undefined {
   let specialChars = '`~!@#$%^&*()_=+';
   let passwordRx = new RegExp(`[a-zA-Z0-9${specialChars}]+`);
   let specialCharsRx = new RegExp(`[${specialChars}]`);
-  let numbersRx = /[0-9]/;
+  // let numbersRx = /[0-9]/;
   let validPassword: boolean;
 
   validPassword = (

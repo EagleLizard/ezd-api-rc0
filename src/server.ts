@@ -8,6 +8,8 @@ import { registerRoutes } from './lib/routes';
 import { logger } from './lib/logger';
 import { logMiddleware } from './lib/middleware/log-middleware';
 import { EXIT_SIGNAL_CODES } from './constants';
+import { EzdSessionStore } from './lib/db/ezd-session-store';
+import { sessionMiddleware } from './lib/middleware/session-middleware';
 
 export async function initServer(): Promise<void> {
   let initServerPromise: Promise<void>;
@@ -22,7 +24,22 @@ export async function initServer(): Promise<void> {
     // middleware
     app.use(logMiddleware);
     app.use(express.json());
-    app.use(cors());
+    app.use(cors({
+      origin: config.EZD_WEB_ORIGIN,
+      credentials: true,
+    }));
+    const store = new EzdSessionStore();
+    app.use(sessionMiddleware({
+      secret: config.SESSION_SECRET,
+      resave: false,
+      saveUninitialized: true,
+      store,
+      cookie: {
+        // secure: true,
+        maxAge: 30 * 24 * 60 * 60 * 1000 // 30 days
+      },
+    }));
+
     // routes
     app = registerRoutes(app);
 

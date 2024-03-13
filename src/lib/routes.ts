@@ -10,6 +10,7 @@ import { getAddrPings } from './controllers/get-addr-pings';
 import { getAddrPingStats } from './controllers/get-addr-ping-stats';
 import { registerUser } from './controllers/register-user';
 import { postUserLogin } from './controllers/post-user-login';
+import { postUserAuth, postUserAuthVerify } from './controllers/post-user-auth';
 
 export function registerRoutes(app: Express): Express {
 
@@ -26,6 +27,8 @@ export function registerRoutes(app: Express): Express {
   app.get('/v1/addr/:id/ping/stats', getAddrPingStats);
   app.get('/v1/addrs', getAddrs);
 
+  app.post('/v1/user/auth', postUserAuth);
+  app.post('/v1/user/auth/verify', postUserAuthVerify);
   app.post('/v1/user/login', postUserLogin);
   app.post('/v1/users/register', registerUser);
 
