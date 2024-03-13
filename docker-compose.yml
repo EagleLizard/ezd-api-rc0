@@ -19,6 +19,7 @@ services:
       - POSTGRES_DB=${POSTGRES_DB}
       - SESSION_SECRET=${SESSION_SECRET}
       - EZD_JWT_SECRET=${EZD_JWT_SECRET}
+      - EZD_WEB_ORIGIN=${EZD_WEB_ORIGIN}
   postgres:
     container_name: postgres_db
     restart: unless-stopped
