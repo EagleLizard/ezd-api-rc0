@@ -17,6 +17,8 @@ services:
       - POSTGRES_PORT=${POSTGRES_DOCKER_PORT}
       - POSTGRES_HOST=${POSTGRES_HOST}
       - POSTGRES_DB=${POSTGRES_DB}
+      - SESSION_SECRET=${SESSION_SECRET}
+      - EZD_JWT_SECRET=${EZD_JWT_SECRET}
   postgres:
     container_name: postgres_db
     restart: unless-stopped
