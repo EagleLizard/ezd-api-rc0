@@ -17,8 +17,7 @@ const config = {
   EZD_JWT_SECRET: getJwtSecret(),
   EZD_WEB_ORIGIN: getEzdWebOrigin(),
   EZD_ADMIN_EMAIL: getEnvVarOrErr('EZD_ADMIN_EMAIL'), 
-  EZD_ENCYPTION_SECRET: getEnvVarOrErr('EZD_ENCYPTION_SECRET'), 
-  REST_FRAMEWORK: process.env.REST_FRAMEWORK,
+  EZD_ENCYPTION_SECRET: getEnvVarOrErr('EZD_ENCYPTION_SECRET'),
 };
 
 export {

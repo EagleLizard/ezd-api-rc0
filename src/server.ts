@@ -1,77 +1,70 @@
 
-import { Server } from 'http';
-import express, { Express } from 'express';
-import cors from 'cors';
-
+import Fastify, { FastifyInstance } from 'fastify';
+import cors from '@fastify/cors';
+import fastifyCookie from '@fastify/cookie';
+import fastifySession from '@fastify/session';
+import { registerAuthorizedRoutes, registerPublicRoutes } from './lib/routes';
 import { config } from './config';
-import { registerRoutes } from './lib/routes';
 import { logger } from './lib/logger';
-import { logMiddleware } from './lib/middleware/log-middleware';
-import { EXIT_SIGNAL_CODES } from './constants';
 import { EzdSessionStore } from './lib/db/ezd-session-store';
-import { sessionMiddleware } from './lib/middleware/session-middleware';
 
 export async function initServer(): Promise<void> {
   let initServerPromise: Promise<void>;
-  let server: Server;
 
-  initServerPromise = new Promise<void>((resolve, reject) => {
-    let app: Express;
-    let port: number;
-    port = config.port;
-    app = express();
-    
+  initServerPromise = new Promise((resolve, reject) => {
+    let app: FastifyInstance;
+    app = Fastify({
+      logger: true,
+    });
+
     // middleware
-    app.use(logMiddleware);
-    app.use(express.json());
-    app.use(cors({
+    app.register(cors, {
       origin: config.EZD_WEB_ORIGIN,
       credentials: true,
-    }));
-    const store = new EzdSessionStore();
-    app.use(sessionMiddleware({
-      secret: config.SESSION_SECRET,
-      resave: false,
-      saveUninitialized: true,
-      store,
-      cookie: {
-        // secure: true,
-        maxAge: 30 * 24 * 60 * 60 * 1000 // 30 days
-      },
-    }));
+    });
+    app.register(fastifyCookie);
+    app.register((fastify, opts, done) => {
+      const store = new EzdSessionStore();
+      fastify.register(fastifySession, {
+        secret: config.SESSION_SECRET,
+        saveUninitialized: true,
+        
+        store,
+        cookie: {
+          maxAge: 30 * 24 * 60 * 60 * 1000, // 30 days
+          secure: 'auto',
+        },
+      });
+      registerAuthorizedRoutes(fastify);
+      done();
+    })
+    // app.addHook('onRequest', (req, rep, done) => {
+    //   console.log('onSend');
+    //   console.log(req.session.sessionId);
+    //   done();
+    // });
+    app.addHook('onSend', (req, rep, pauload: unknown, done) => {
+      // console.log('onSend');
+      // console.log(req.session?.sessionId);
+      // console.log(req.cookies);
+      done();
+    });
 
     // routes
-    app = registerRoutes(app);
+    app = registerPublicRoutes(app);
 
-    server = app.listen(port, () => {
-      logger.info(`listening on port: ${port}`);
+    // server = app.listen({
+    app.listen({
+      port: config.port,
+    }, (err, address) => {
+      if(err) {
+        reject(err);
+        return;
+      }
+      logger.info(`Listening on port ${config.port}, address: ${address}`);
       resolve();
     });
   });
-
   await initServerPromise;
 
-  EXIT_SIGNAL_CODES.forEach(exitSignal => {
-    process.on(exitSignal, (signal) => {
-      shutdown(signal, server);
-    });
-  });
-
-  process.on('unhandledRejection', (reason) => {
-    console.error(reason);
-    logger.error(`Unhandled rejection: ${reason}`);
-  });
-}
-
-async function shutdown(signal: string, server: Server) {
-  logger.info(`${signal} received.`);
-  server.close(err => {
-    if(err) {
-      logger.info(`Error closing HTTP server: ${err}`);
-      process.exitCode = 1;
-    } else {
-      logger.info('HTTP server closed');
-      process.exitCode = 0;
-    }
-  })
 }
