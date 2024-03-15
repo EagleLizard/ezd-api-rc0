@@ -27,10 +27,16 @@ const SessionDtoSchema = z.object({
       expires: z.coerce.date().or(z.null()).optional(),
       httpOnly: z.boolean().optional(),
       path: z.string().optional(),
-      domain: z.string().optional(),
+      domain: z.coerce.string().optional(),
       secure: z.boolean().or(z.literal('auto')).optional(),
       sameSite: z.boolean()
-        .or(z.literal('lax'))
+        .or(
+          z.string()
+          .transform(val => {
+            return val.toLowerCase();
+          })
+          .pipe(z.literal('lax'))
+        )
         .or(z.literal('strict'))
         .or(z.literal('none'))
         .optional(),

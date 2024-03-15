@@ -3,6 +3,7 @@ import { Request, Response } from 'express';
 import { PingService } from '../services/ping-service';
 import { PingDto } from '../models/ping-dto';
 import { PingAddrDto } from '../models/ping-addr-dto';
+import { FastifyReply, FastifyRequest } from 'fastify';
 
 export async function getAddrPings(req: Request, res: Response) {;
   let addrDto: PingAddrDto
@@ -16,4 +17,25 @@ export async function getAddrPings(req: Request, res: Response) {;
     addr: addrDto.addr,
     result: pingDtos,
   });
+}
+export async function getAddrPings2(
+  req: FastifyRequest<{
+    Params: {
+      id: string;
+    },
+  }>,
+  rep: FastifyReply
+) {;
+  let addrDto: PingAddrDto
+  let pingDtos: PingDto[];
+  let addrId: string;
+  addrId = req.params.id;
+  pingDtos = await PingService.getPingsByAddr(addrId)
+  addrDto = await PingService.getAddrById(addrId)
+  rep.code(200)
+  return {
+    count: pingDtos.length,
+    addr: addrDto.addr,
+    result: pingDtos,
+  };
 }

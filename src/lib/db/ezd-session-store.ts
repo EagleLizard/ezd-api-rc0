@@ -3,6 +3,7 @@ import { SessionData, Store } from 'express-session';
 import { SessionDto } from '../models/session-dto';
 import { PostgresClient } from './postgres-client';
 import { QueryResult } from 'pg';
+import { logger } from '../logger';
 // 60 seconds * 60 minutes * 24 hours
 const ONE_DAY = 60 * 60 * 24;
 const SESSION_EXPIRE_DEFAULT = ONE_DAY;
@@ -72,10 +73,13 @@ async function getSession(sid: string): Promise<SessionDto | undefined> {
   if(queryRes.rows[0] === undefined) {
     return;
   }
-  console.log('queryRes.rows[0]');
-  console.log(queryRes.rows[0]);
-  sessionDto = SessionDto.deserialize(queryRes.rows[0]);
-  console.log({ sessionDto })
+  try {
+    sessionDto = SessionDto.deserialize(queryRes.rows[0]);
+  } catch(e) {
+    console.error(e);
+    logger.error(e);
+    throw e;
+  }
   return sessionDto;
 }
 
@@ -97,7 +101,7 @@ async function insertSession(sid: string, sess: SessionData, expireTime: number)
     sid,
     JSON.stringify(sess),
     expireTime,
-  ]
+  ];
   queryRes = await PostgresClient.query(queryStr, queryParams);
   return queryRes;
 }

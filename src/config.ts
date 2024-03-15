@@ -16,11 +16,23 @@ const config = {
   SESSION_SECRET: getSessionSecret(),
   EZD_JWT_SECRET: getJwtSecret(),
   EZD_WEB_ORIGIN: getEzdWebOrigin(),
+  EZD_ADMIN_EMAIL: getEnvVarOrErr('EZD_ADMIN_EMAIL'), 
+  EZD_ENCYPTION_SECRET: getEnvVarOrErr('EZD_ENCYPTION_SECRET'), 
+  REST_FRAMEWORK: process.env.REST_FRAMEWORK,
 };
 
 export {
   config,
 };
+
+function getEnvVarOrErr(envKey: string): string {
+  let rawEnvVar: string | undefined;
+  rawEnvVar = process.env[envKey];
+  if(!isString(rawEnvVar)) {
+    throw new Error(`Invalid ${envKey}`);
+  }
+  return rawEnvVar;
+}
 
 function getSessionSecret(): string {
   let rawSessionSecret: unknown;

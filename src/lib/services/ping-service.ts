@@ -19,6 +19,7 @@ export type GetPingsResult = {
 
 type GetPingsParams = {
   start?: string | undefined;
+  limit?: number | undefined;
 };
 
 type GetPingStatsParams = {
