@@ -10,6 +10,8 @@ import { getAddrs } from './controllers/get-addrs';
 import { postUserAuth, postUserAuthVerify } from './controllers/post-user-auth';
 import { postUserLogin } from './controllers/post-user-login';
 import { registerUser } from './controllers/register-user';
+import { postGetKeychainKeys } from './controllers/post-get-keychain-keys';
+import { getUser } from './controllers/get-user';
 
 export function registerPublicRoutes(app: FastifyInstance): FastifyInstance {
   app.get('/v1/health', getHealth);
@@ -28,12 +30,16 @@ export function registerPublicRoutes(app: FastifyInstance): FastifyInstance {
   app.post('/v1/user/auth', postUserAuth);
   app.post('/v1/user/auth/verify', postUserAuthVerify);
   
+  app.get('/v1/users/:userId', getUser);
   app.post('/v1/users/register', registerUser);
+
   return app;
 }
 
 
 export function registerAuthorizedRoutes(app: FastifyInstance): FastifyInstance {
   app.post('/v1/user/login', postUserLogin);
+
+  app.post('/v1/keychain/keys', postGetKeychainKeys);
   return app;
 }

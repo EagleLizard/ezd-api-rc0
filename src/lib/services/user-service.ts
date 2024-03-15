@@ -8,6 +8,8 @@ import { UserDto } from '../models/user-dto';
 import { QueryResult } from 'pg';
 import { validateEmailAddress } from '../../util/input-validation';
 import { ValidationError } from '../models/error/validation-error';
+import { AdminService } from './admin-service';
+import { KeychainService } from './keychain-service';
 
 export class UserService {
 
@@ -26,6 +28,24 @@ export class UserService {
       return undefined;
     }
     return user;
+  }
+
+  static async getUser(userId: string): Promise<UserDto | undefined> {
+    let userDto: UserDto;
+    let queryStr: string;
+    let queryRes: QueryResult;
+    queryStr = `
+      select * from users u
+        where u.user_id = $1
+    `;
+    queryRes = await PostgresClient.query(queryStr, [
+      userId,
+    ]);
+    if(queryRes.rows[0] === undefined) {
+      return;
+    }
+    userDto = UserDto.deserialize(queryRes.rows[0]);
+    return userDto;
   }
 
   static async getUserByName(userName: string): Promise<UserDto | undefined> {
@@ -80,9 +100,10 @@ export class UserService {
       throw e;
     }
     passwordDto = await this.createPassword(userId, password);
-    console.log({
-      passwordDto,
-    });
+    if(AdminService.emailIsAdmin(email)) {
+      return;
+    }
+    await KeychainService.insertKeychainKey(password, passwordDto.password_id);
   }
 
   static async createPassword(userId: string, password: string) {
