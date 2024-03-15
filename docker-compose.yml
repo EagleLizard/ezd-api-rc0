@@ -21,7 +21,7 @@ services:
       - EZD_JWT_SECRET=${EZD_JWT_SECRET}
       - EZD_WEB_ORIGIN=${EZD_WEB_ORIGIN}
       - EZD_ADMIN_EMAIL=${EZD_ADMIN_EMAIL}
-      - REST_FRAMEWORK=${REST_FRAMEWORK}
+      - EZD_ENCRYPTION_SECRET=${EZD_ENCRYPTION_SECRET}
   postgres:
     container_name: postgres_db
     restart: unless-stopped
