@@ -1,12 +1,13 @@
 
 import { FastifyReply, FastifyRequest } from 'fastify';
 
-import { isString } from '../../util/validate-primitives';
-import { UserDto } from '../models/user-dto';
-import { UserService } from '../services/user-service';
 import { AuthService } from '../services/auth-service';
+import { isString } from '../../util/validate-primitives';
+import { UserService } from '../services/user-service';
+import { UserDto } from '../models/user-dto';
+import { JwtSessionDto } from '../models/jwt-session-dto';
 
-export async function postUserLogin(
+export async function postJwtAuth(
   req: FastifyRequest<{
     Body: {
       userName?: string;
@@ -15,10 +16,10 @@ export async function postUserLogin(
   }>,
   rep: FastifyReply
 ) {
+  let token: string | undefined;
   let userName: string;
   let passwordStr: string;
   let user: UserDto | undefined;
-  let token: string | undefined;
 
   if(
     !isString(req.body.userName)
@@ -39,10 +40,37 @@ export async function postUserLogin(
     rep.code(403);
     return;
   }
-  // console.log('req.session.cookie');
-  rep.cookie('ezd-token', token);
-  rep.code(200);
+  rep.code(200)
   return {
-    token,
+    result: token,
   };
+}
+
+export async function postJwtAuthVerify(
+  req: FastifyRequest<{
+    Body: {
+      token?: string;
+    };
+  }>,
+  rep: FastifyReply
+) {
+  let token: string;
+  let jwtSession: JwtSessionDto | undefined;
+
+  if(!isString(req.body.token)) {
+    rep.code(403);
+    return;
+  }
+  token = req.body.token;
+
+  jwtSession = await AuthService.verifyJwtSession(token);
+  if(jwtSession === undefined) {
+    rep.code(403);
+    return;
+  }
+  if(!jwtSession.valid) {
+    rep.code(401);
+    return;
+  }
+  rep.code(200);
 }

@@ -27,12 +27,12 @@ export async function initServer(): Promise<void> {
       const store = new EzdSessionStore();
       fastify.register(fastifySession, {
         secret: config.SESSION_SECRET,
-        saveUninitialized: true,
-        
+        saveUninitialized: true, 
         store,
         cookie: {
           maxAge: 30 * 24 * 60 * 60 * 1000, // 30 days
           secure: 'auto',
+          httpOnly: false,
         },
       });
       registerAuthorizedRoutes(fastify);
@@ -56,6 +56,7 @@ export async function initServer(): Promise<void> {
     // server = app.listen({
     app.listen({
       port: config.port,
+      host: '0.0.0.0',
     }, (err, address) => {
       if(err) {
         reject(err);

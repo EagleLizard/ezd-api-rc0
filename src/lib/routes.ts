@@ -7,8 +7,8 @@ import { postGetAddrByVal } from './controllers/post-addr';
 import { getAddrPings } from './controllers/get-addr-pings';
 import { getAddrPingStats } from './controllers/get-addr-ping-stats';
 import { getAddrs } from './controllers/get-addrs';
-import { postUserAuth, postUserAuthVerify } from './controllers/post-user-auth';
-import { postUserLogin } from './controllers/post-user-login';
+import { postJwtAuth, postJwtAuthVerify } from './controllers/post-jwt-auth';
+import { postUserLogin, postUserVerify } from './controllers/post-user-auth';
 import { registerUser } from './controllers/register-user';
 import { postGetKeychainKeys } from './controllers/post-get-keychain-keys';
 import { getUser } from './controllers/get-user';
@@ -27,8 +27,8 @@ export function registerPublicRoutes(app: FastifyInstance): FastifyInstance {
   app.get('/v1/addr/:id/ping/stats', getAddrPingStats);
   app.get('/v1/addrs', getAddrs);
 
-  app.post('/v1/user/auth', postUserAuth);
-  app.post('/v1/user/auth/verify', postUserAuthVerify);
+  app.post('/v1/jwt/auth', postJwtAuth);
+  app.post('/v1/jwt/auth/verify', postJwtAuthVerify);
   
   app.get('/v1/users/:userId', getUser);
   app.post('/v1/users/register', registerUser);
@@ -39,6 +39,7 @@ export function registerPublicRoutes(app: FastifyInstance): FastifyInstance {
 
 export function registerAuthorizedRoutes(app: FastifyInstance): FastifyInstance {
   app.post('/v1/user/login', postUserLogin);
+  app.get('/v1/user/verify', postUserVerify);
 
   app.post('/v1/keychain/keys', postGetKeychainKeys);
   return app;

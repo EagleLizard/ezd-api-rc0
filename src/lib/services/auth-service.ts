@@ -2,7 +2,6 @@
 import jwt from 'jsonwebtoken';
 
 import { config } from '../../config';
-import { logger } from '../logger';
 import { isString } from '../../util/validate-primitives';
 import { JwtSessionDto } from '../models/jwt-session-dto';
 import { UserDto } from '../models/user-dto';
@@ -48,7 +47,7 @@ export class AuthService {
     return token;
   }
 
-  static async verifyJwtSession(token: string): Promise<JwtSessionDto | undefined> {
+  static async verifyJwtSession(token: string): Promise<jwt.JwtPayload | undefined> {
     let jwtSession: JwtSessionDto | undefined;
     let jwtPayload: jwt.JwtPayload | undefined;
     jwtPayload = await AuthService.verifyToken(token);
@@ -59,7 +58,10 @@ export class AuthService {
       return;
     }
     jwtSession = await AuthService.getJetSession(jwtPayload.jwt_session_id);
-    return jwtSession;
+    if(!jwtSession?.valid) {
+      return;
+    }
+    return jwtPayload;
   }
 
   static async getJetSession(jwtSessionId: number): Promise<JwtSessionDto | undefined> {
@@ -90,7 +92,7 @@ export class AuthService {
       ...opts,
     };
     if(jwtOpts.expiresIn === undefined) {
-      jwtOpts.expiresIn = '1h';
+      jwtOpts.expiresIn = '12h';
     }
     token = jwt.sign(payload, config.EZD_JWT_SECRET, jwtOpts);
     return token;
@@ -118,8 +120,6 @@ export class AuthService {
     try {
       jwtPayload = await jwtPromise;
     } catch (e) {
-      console.error(e);
-      logger.error(e);
       return;
     }
     return jwtPayload;

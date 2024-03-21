@@ -21,7 +21,6 @@ export class EzdSessionStore extends Store {
     if(sessionDto === undefined) {
       return cb();
     }
-    console.log(sessionDto.sess);
     return cb(null, sessionDto.sess);
   }
 
