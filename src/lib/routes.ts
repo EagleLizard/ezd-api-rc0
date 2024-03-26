@@ -37,10 +37,15 @@ export function registerPublicRoutes(app: FastifyInstance): FastifyInstance {
 }
 
 
-export function registerAuthorizedRoutes(app: FastifyInstance): FastifyInstance {
+export function registerRoutes(app: FastifyInstance): FastifyInstance {
   app.post('/v1/user/login', postUserLogin);
   app.get('/v1/user/verify', postUserVerify);
 
+  return app;
+}
+
+export function registerAuthorizedRoutes(app: FastifyInstance): FastifyInstance {
   app.post('/v1/keychain/keys', postGetKeychainKeys);
+
   return app;
 }

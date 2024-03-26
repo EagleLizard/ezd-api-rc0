@@ -5,6 +5,7 @@ const UserDtoSchema = z.object({
   user_id: z.string(),
   user_name: z.string(),
   email: z.string(),
+  role_id: z.number(),
   created_at: z.coerce.date(),
 });
 
@@ -15,6 +16,7 @@ export class UserDto implements UserDtoType {
     public user_name: string,
     public user_id: string,
     public email: string,
+    public role_id: number,
     public created_at: Date,
   ) {}
 
@@ -25,6 +27,7 @@ export class UserDto implements UserDtoType {
       userDto.user_name,
       userDto.user_id,
       userDto.email,
+      userDto.role_id,
       userDto.created_at,
     );
   }

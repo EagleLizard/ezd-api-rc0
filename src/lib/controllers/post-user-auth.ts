@@ -14,7 +14,6 @@ export async function postUserVerify(
   let sessionId: string | undefined;
   let token: string | undefined;
   let tokenPayload: JwtPayload | undefined;
-  let userId: string;
   let user: UserDto | undefined;
 
   /*

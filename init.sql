@@ -1,10 +1,18 @@
 
 CREATE EXTENSION pgcrypto;
 
+create table user_roles (
+  role_id SERIAL PRIMARY KEY,
+  role_name TEXT NOT NULL UNIQUE,
+  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
 create table users (
   user_id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
   user_name TEXT NOT NULL UNIQUE,
   email TEXT NOT NULL UNIQUE,
+
+  role_id INT references user_roles(role_id) NOT NULL,
 
   created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );

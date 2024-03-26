@@ -5,7 +5,7 @@ import { AuthService } from '../services/auth-service';
 import { isString } from '../../util/validate-primitives';
 import { UserService } from '../services/user-service';
 import { UserDto } from '../models/user-dto';
-import { JwtSessionDto } from '../models/jwt-session-dto';
+import { JwtPayload } from 'jsonwebtoken';
 
 export async function postJwtAuth(
   req: FastifyRequest<{
@@ -55,8 +55,8 @@ export async function postJwtAuthVerify(
   rep: FastifyReply
 ) {
   let token: string;
-  let jwtSession: JwtSessionDto | undefined;
-
+  let jwtSession: JwtPayload | undefined;
+  
   if(!isString(req.body.token)) {
     rep.code(403);
     return;

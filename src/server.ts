@@ -3,10 +3,13 @@ import Fastify, { FastifyInstance } from 'fastify';
 import cors from '@fastify/cors';
 import fastifyCookie from '@fastify/cookie';
 import fastifySession from '@fastify/session';
-import { registerAuthorizedRoutes, registerPublicRoutes } from './lib/routes';
+import { registerRoutes, registerPublicRoutes, registerAuthorizedRoutes } from './lib/routes';
 import { config } from './config';
 import { logger } from './lib/logger';
 import { EzdSessionStore } from './lib/db/ezd-session-store';
+import { isString } from './util/validate-primitives';
+import { AuthService } from './lib/services/auth-service';
+import { JwtPayload } from 'jsonwebtoken';
 
 export async function initServer(): Promise<void> {
   let initServerPromise: Promise<void>;
@@ -14,7 +17,7 @@ export async function initServer(): Promise<void> {
   initServerPromise = new Promise((resolve, reject) => {
     let app: FastifyInstance;
     app = Fastify({
-      logger: true,
+      logger: logger,
     });
 
     // middleware
@@ -35,9 +38,9 @@ export async function initServer(): Promise<void> {
           httpOnly: false,
         },
       });
-      registerAuthorizedRoutes(fastify);
+      registerRoutes(fastify);
       done();
-    })
+    });
     // app.addHook('onRequest', (req, rep, done) => {
     //   console.log('onSend');
     //   console.log(req.session.sessionId);
@@ -53,7 +56,34 @@ export async function initServer(): Promise<void> {
     // routes
     app = registerPublicRoutes(app);
 
-    // server = app.listen({
+    // authorized routes
+    app.register((fastify, opts, done) => {
+      fastify.addHook('preHandler', async (req, res) => {
+        let apiToken: string;
+        let jwtPayload: JwtPayload | undefined;
+        let jwtValid: boolean;
+        console.log('~ preHandler ~');
+        if(!isString(req.headers['x-api-token'])) {
+          res.code(401);
+          res.send({});
+          return;
+        }
+        apiToken = req.headers['x-api-token'];
+        console.log({
+          apiToken,
+        });
+        jwtPayload = await AuthService.verifyJwtSession(apiToken);
+        jwtValid = jwtPayload !== undefined;
+        if(!jwtValid) {
+          res.code(401);
+          res.send({});
+          return;
+        }
+      });
+      registerAuthorizedRoutes(fastify);
+      done();
+    });
+
     app.listen({
       port: config.port,
       host: '0.0.0.0',

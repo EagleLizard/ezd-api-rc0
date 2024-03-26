@@ -92,7 +92,8 @@ export class AuthService {
       ...opts,
     };
     if(jwtOpts.expiresIn === undefined) {
-      jwtOpts.expiresIn = '12h';
+      // jwtOpts.expiresIn = '12h';
+      jwtOpts.expiresIn = '2h';
     }
     token = jwt.sign(payload, config.EZD_JWT_SECRET, jwtOpts);
     return token;

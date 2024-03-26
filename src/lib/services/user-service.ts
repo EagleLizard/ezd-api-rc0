@@ -87,6 +87,7 @@ export class UserService {
     try {
       userId = await this.createUser(userName, email);
     } catch(e) {
+      console.error(e);
       if(
         isObject(e)
         && isString(e.code)
@@ -157,7 +158,7 @@ export class UserService {
     let colNums: string[];
     let colNamesStr: string;
     let colNumsStr: string;
-    let queryParams: [ string, string ];
+    let queryParams: [ string, string, number ];
 
     let validEmailErr = validateEmailAddress(email);
 
@@ -169,6 +170,7 @@ export class UserService {
     colNames = [
       'user_name',
       'email',
+      'role_id',
     ];
     colNums = colNames.map((colName, idx) => {
       return `$${idx + 1}`;
@@ -181,6 +183,7 @@ export class UserService {
     queryParams = [
       userName,
       email,
+      2, // static 'User' type
     ];
     queryRes = await PostgresClient.query(queryStr, queryParams);
     if(!isString(queryRes.rows[0]?.user_id)) {

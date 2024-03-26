@@ -9,6 +9,10 @@ export async function postGetKeychainKeys(
 ) {
   let keychainKeys: KeychainKeyDto[];
   keychainKeys = await KeychainService.getKeychainKeys();
+
+  console.log('req.etc');
+  console.log(req.etc); // see: index.d.ts
+
   rep.code(200);
   return {
     count: keychainKeys.length,

@@ -5,7 +5,7 @@
   "main": "./dist/main.js",
   "scripts": {
     "start": "node ./dist/main.js",
-    "dev": "nodemon --ext '*' -w dist --exec 'npm run-s start'",
+    "dev": "nodemon --ext '*' -w dist --exec 'npm start'",
     "build": "tsc",
     "test": "vitest",
     "coverage": "vitest run --coverage"
@@ -23,6 +23,7 @@
     "jsonwebtoken": "^9.0.2",
     "morgan": "^1.10.0",
     "pg": "8.10.0",
+    "pino": "^8.19.0",
     "source-map-support": "^0.5.21",
     "winston": "^3.11.0",
     "zod": "^3.22.4"
