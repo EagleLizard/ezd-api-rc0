@@ -39,6 +39,12 @@ const SessionDtoSchema = z.object({
         )
         .or(z.literal('strict'))
         .or(z.literal('none'))
+        .transform(val => {
+          return (val === null)
+            ? undefined
+            : val
+          ;
+        })
         .optional(),
     })
   }),
