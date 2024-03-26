@@ -6,9 +6,11 @@ import { isString } from '../../util/validate-primitives';
 import { JwtSessionDto } from '../models/jwt-session-dto';
 import { UserDto } from '../models/user-dto';
 import { PostgresClient } from '../db/postgres-client';
+import { JwtSessionPayload } from '../models/jwt';
 
 export class AuthService {
-  static async createJwtSession(user: UserDto): Promise<string | undefined> {
+
+  static async createJwtSession(user: UserDto): Promise<string> {
     let jwtSession: JwtSessionDto;
     let queryStr: string;
     let colNames: string[];
@@ -47,9 +49,29 @@ export class AuthService {
     return token;
   }
 
-  static async verifyJwtSession(token: string): Promise<jwt.JwtPayload | undefined> {
+  static async invalidateJwtSession(tokenId: number) {
+    let queryStr: string;
+    let queryParams: [ number ];
+    queryStr = `
+      update jwt_sessions
+        set valid = false
+        where jwt_session_id = $1
+    `;
+    queryParams = [
+      tokenId,
+    ];
+    try {
+      await PostgresClient.query(queryStr, queryParams);
+    } catch(e) {
+      console.error(e);
+      throw e;
+    }
+  }
+
+  static async verifyJwtSession(token: string): Promise<JwtSessionPayload | undefined> {
     let jwtSession: JwtSessionDto | undefined;
     let jwtPayload: jwt.JwtPayload | undefined;
+    let jwtSessionPayload: JwtSessionPayload;
     jwtPayload = await AuthService.verifyToken(token);
     if(
       (jwtPayload === undefined)
@@ -61,7 +83,8 @@ export class AuthService {
     if(!jwtSession?.valid) {
       return;
     }
-    return jwtPayload;
+    jwtSessionPayload = JwtSessionPayload.deserialize(jwtPayload);
+    return jwtSessionPayload;
   }
 
   static async getJetSession(jwtSessionId: number): Promise<JwtSessionDto | undefined> {
@@ -92,8 +115,8 @@ export class AuthService {
       ...opts,
     };
     if(jwtOpts.expiresIn === undefined) {
-      // jwtOpts.expiresIn = '12h';
-      jwtOpts.expiresIn = '2h';
+      jwtOpts.expiresIn = '12h';
+      // jwtOpts.expiresIn = '2h';
     }
     token = jwt.sign(payload, config.EZD_JWT_SECRET, jwtOpts);
     return token;

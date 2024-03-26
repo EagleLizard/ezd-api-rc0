@@ -6,6 +6,7 @@ import { UserDto } from '../models/user-dto';
 import { UserService } from '../services/user-service';
 import { AuthService } from '../services/auth-service';
 import { JwtPayload } from 'jsonwebtoken';
+import { JwtSessionPayload } from '../models/jwt';
 
 export async function postUserVerify(
   req: FastifyRequest,
@@ -55,6 +56,38 @@ export async function postUserVerify(
       user,
       exp: tokenPayload.exp,
     }
+  }
+}
+
+export async function postTokenExchange(
+  req: FastifyRequest<{
+    Body: {
+      token: string;
+    };
+  }>,
+  rep: FastifyReply
+) {
+  let jwtPayload: JwtSessionPayload | undefined;
+  let nextToken: string | undefined;
+  let user: UserDto | undefined;
+  jwtPayload = await AuthService.verifyJwtSession(req.body.token);
+  if(jwtPayload === undefined) {
+    rep.code(401);
+    return;
+  }
+  user = await UserService.getUser(jwtPayload.user_id);
+  if(user === undefined) {
+    rep.code(403);
+    return;
+  }
+  // create a new session
+  nextToken = await AuthService.createJwtSession(user);
+  // invalidate the current token
+  await AuthService.invalidateJwtSession(jwtPayload.jwt_session_id);
+
+  rep.code(200);
+  return {
+    nextToken,
   }
 }
 
