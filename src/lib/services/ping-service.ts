@@ -26,6 +26,7 @@ type GetPingStatsParams = {
   addrType?: ADDR_TYPE_ENUM;
   bucketVal?: number;
   bucketUnit?: TimeBucketUnit;
+  start?: string;
 };
 type StartParam = {
   unit: TIME_UNIT;
@@ -34,10 +35,14 @@ type StartParam = {
 
 export enum TIME_UNIT {
   MINUTE = 'MINUTE',
+  HOUR = 'HOUR',
+  DAY = 'DAY',
 }
 
 export const TIME_UNIT_MAP: Record<TIME_UNIT, string> = {
   [TIME_UNIT.MINUTE]: 'MINUTES',
+  [TIME_UNIT.HOUR]: 'HOURS',
+  [TIME_UNIT.DAY]: 'DAYS',
 };
 
 export class PingService {
@@ -45,11 +50,26 @@ export class PingService {
   static async getPingStats(params: GetPingStatsParams = {}): Promise<PingStatDto[]> {
     let timeBucketQuery: GetTimeBucketQueryResult;
     let pingStatDtos: PingStatDto[];
+    let startParam: StartParam | undefined;
+    let startDate: Date | undefined;
+    console.log(params);
+    if(params.start !== undefined) {
+      startParam = parseStartParam(params.start);
+      startDate = new Date(Date.now() - startParamToMs(startParam));
+      console.log({
+        startParam,
+        startDate,
+      })
+    }
+
     timeBucketQuery = getTimeBucketQuery({
       addrType: params.addrType,
       dateBinVal: params.bucketVal,
       dateBinUnit: params.bucketUnit,
+      start: startDate,
     });
+    console.log('timeBucketQuery');
+    console.log(timeBucketQuery);
     const queryRes = await PostgresClient.query(
       timeBucketQuery.query,
       timeBucketQuery.queryParams,
@@ -358,7 +378,8 @@ function getTimeBucketQuery(opts: GetTimeBucketQueryOpts): GetTimeBucketQueryRes
     ;
     startQueryStr += `
       p.created_at >= $${queryParams.length}
-    `
+    `;
+    queryStrParts.push(startQueryStr);
   }
   queryStrParts.push(`
     group by time_bucket
@@ -378,7 +399,23 @@ function getTimeBucketQuery(opts: GetTimeBucketQueryOpts): GetTimeBucketQueryRes
   return timeBucketQueryRes;
 }
 
-
+function startParamToMs(startParam: StartParam): number {
+  let ms: number;
+  let mod: number;
+  switch(startParam.unit) {
+    case TIME_UNIT.MINUTE:
+      mod = 60 * 1000; // seconds_in_minute * ms_in_second
+      break;
+    case TIME_UNIT.HOUR:
+      mod = 60 * 60 * 1000; // minutes_in_hour * seconds_in_minute * ms_in_second
+      break;
+    case TIME_UNIT.DAY:
+      mod = 24 * 60 * 60 * 1000; // hours_in_day * minutes_in_hour * seconds_in_minute * ms_in_second
+      break;
+  }
+  ms = startParam.value * mod;
+  return ms;
+}
 
 function parseStartParam(rawStartParam: unknown): StartParam {
   let startParamRxResult: RegExpExecArray | null;
@@ -390,7 +427,7 @@ function parseStartParam(rawStartParam: unknown): StartParam {
   if(!isString(rawStartParam)) {
     throw new Error(`unexpected 'start' query param type: ${typeof rawStartParam}, param: ${rawStartParam}`);
   }
-  startParamRxResult = /^([0-9]+)([m]+)$/.exec(rawStartParam);
+  startParamRxResult = /^([0-9]+)([mhd]+)$/.exec(rawStartParam);
   if(
     (startParamRxResult === null)
     || (startParamRxResult[1] === undefined)
@@ -402,7 +439,13 @@ function parseStartParam(rawStartParam: unknown): StartParam {
   unitStr = startParamRxResult[2];
   switch(unitStr) {
     case 'm':
-      unit = TIME_UNIT.MINUTE
+      unit = TIME_UNIT.MINUTE;
+      break;
+    case 'h':
+      unit = TIME_UNIT.HOUR;
+      break;
+    case 'd':
+      unit = TIME_UNIT.DAY;
       break;
     default:
       throw new Error(`unexpected 'start' query param type: ${typeof rawStartParam}, param: ${rawStartParam}`);

@@ -27,7 +27,7 @@ export async function getPings(
     (queryParams.start !== undefined)
     && !isString(queryParams.start)
   ) {
-    throw new Error(`Invalid type`)
+    throw new Error(`Invalid type for start param`)
   }
   try {
     pingRes = await PingService.getPings({

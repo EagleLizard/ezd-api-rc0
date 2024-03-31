@@ -70,6 +70,12 @@ export async function postTokenExchange(
   let jwtPayload: JwtSessionPayload | undefined;
   let nextToken: string | undefined;
   let user: UserDto | undefined;
+
+  console.log('req.user');
+  console.log(req.user);
+  console.log('req.userRole');
+  console.log(req.userRole);
+
   jwtPayload = await AuthService.verifyJwtSession(req.body.token);
   if(jwtPayload === undefined) {
     rep.code(401);

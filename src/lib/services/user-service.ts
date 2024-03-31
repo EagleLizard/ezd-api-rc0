@@ -10,6 +10,7 @@ import { validateEmailAddress } from '../../util/input-validation';
 import { ValidationError } from '../models/error/validation-error';
 import { AdminService } from './admin-service';
 import { KeychainService } from './keychain-service';
+import { UserRoleDto } from '../models/user-role-dto';
 
 export class UserService {
 
@@ -46,6 +47,32 @@ export class UserService {
     }
     userDto = UserDto.deserialize(queryRes.rows[0]);
     return userDto;
+  }
+
+  static async getUserRole(userId: string): Promise<UserRoleDto | undefined> {
+    let userRoleDto: UserRoleDto;
+    let queryStr: string;
+    let queryRes: QueryResult<unknown[]>;
+    queryStr = `
+      select ur.role_id, ur.role_name, ur.created_at, ur.privilege_level
+        from user_roles ur left join users u
+          on u.role_id = ur.role_id
+        where u.user_id = $1
+    `;
+    try {
+      queryRes = await PostgresClient.query(queryStr, [
+        userId,
+      ]);
+      console.log(queryRes.rows);
+      if(queryRes.rows.length < 1) {
+        return;
+      }
+      userRoleDto = UserRoleDto.deserialize(queryRes.rows[0]);
+    } catch(e) {
+      console.error(e);
+      throw e;
+    }
+    return userRoleDto;
   }
 
   static async getUserByName(userName: string): Promise<UserDto | undefined> {

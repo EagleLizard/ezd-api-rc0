@@ -44,9 +44,12 @@ export function registerRoutes(app: FastifyInstance): FastifyInstance {
   return app;
 }
 
-export function registerAuthorizedRoutes(app: FastifyInstance): FastifyInstance {
+export function registerAuthenticatedRoutes(app: FastifyInstance): FastifyInstance {
   app.post('/v1/jwt/exchange', postTokenExchange);
-  app.post('/v1/keychain/keys', postGetKeychainKeys);
 
   return app;
+}
+
+export function registerAuthorizedRoutes(app: FastifyInstance) {
+  app.post('/v1/keychain/keys', postGetKeychainKeys);
 }

@@ -12,6 +12,7 @@ export async function getPingStats(
       addr_type?: string,
       bucket_val?: string,
       bucket_unit?: string,
+      start?: string;
     }
   }>,
   rep: FastifyReply
@@ -19,6 +20,7 @@ export async function getPingStats(
   let addr_type: ADDR_TYPE_ENUM | undefined;
   let bucket_val: number | undefined;
   let bucket_unit: TimeBucketUnit | undefined;
+  let start: string | undefined;
   let pingStats: PingStatDto[];
 
   if(
@@ -42,10 +44,13 @@ export async function getPingStats(
       bucket_unit = req.query.bucket_unit;
     }
   }
+  start = req.query.start
+
   pingStats = await PingService.getPingStats({
     addrType: addr_type,
     bucketVal: bucket_val,
     bucketUnit: bucket_unit,
+    start,
   });
   rep.code(200)
   return {

@@ -4,6 +4,11 @@ CREATE EXTENSION pgcrypto;
 create table user_roles (
   role_id SERIAL PRIMARY KEY,
   role_name TEXT NOT NULL UNIQUE,
+
+  -- 0 = most privileged
+  -- 1 = least privileged
+  privilege_level INT DEFAULT 1 NOT NULL,
+
   created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 

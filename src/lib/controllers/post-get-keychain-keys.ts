@@ -10,8 +10,10 @@ export async function postGetKeychainKeys(
   let keychainKeys: KeychainKeyDto[];
   keychainKeys = await KeychainService.getKeychainKeys();
 
-  console.log('req.etc');
-  console.log(req.etc); // see: index.d.ts
+  console.log('req.user');
+  console.log(req.user); // see: index.d.ts
+  console.log('req.userRole');
+  console.log(req.userRole); // see: index.d.ts
 
   rep.code(200);
   return {
