@@ -14,5 +14,10 @@ import { initServer } from './server';
 })();
 
 async function main() {
+  setProcName();
   await initServer();
+}
+
+function setProcName() {
+  process.title = 'ezd-api';
 }
