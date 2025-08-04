@@ -10,4 +10,5 @@ RUN npm i
 COPY src/ src
 COPY tsconfig.json .
 COPY .eslintrc.js .
+RUN mkdir logs
 RUN npm run build

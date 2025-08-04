@@ -1,5 +1,5 @@
 
-FROM --platform=linux/arm64 postgres:latest
+FROM --platform=linux/arm64 postgres:16
 ENV TZ="America/Denver"
 
 COPY ./init.sql /docker-entrypoint-initdb.d/

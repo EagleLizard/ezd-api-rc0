@@ -22,6 +22,8 @@ services:
       - EZD_WEB_ORIGIN=${EZD_WEB_ORIGIN}
       - EZD_ADMIN_EMAIL=${EZD_ADMIN_EMAIL}
       - EZD_ENCRYPTION_SECRET=${EZD_ENCRYPTION_SECRET}
+    volumes:
+      - ./logs:/home/ezd/logs
     logging:
       driver: "json-file"
       options:
@@ -33,7 +35,7 @@ services:
     # image: postgres:latest
     build:
       dockerfile: ./Dockerfile.pg
-    ports: 
+    ports:
       - ${POSTGRES_PORT}:${POSTGRES_DOCKER_PORT}
     volumes:
       - ./ezd_api_db_data:/var/lib/postgresql/data

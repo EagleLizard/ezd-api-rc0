@@ -1,5 +1,5 @@
 import { QueryResult } from 'pg';
-import { EncyptResult, encrypt } from '../../util/crypto-util';
+import { EncryptResult, encrypt } from '../../util/crypto-util';
 import { PostgresClient } from '../db/postgres-client';
 import { KeychainKeyDto } from '../models/keychain-key-dto';
 
@@ -13,7 +13,7 @@ export class KeychainService {
     let queryParams: [ string, string, string ];
     let queryRes: QueryResult;
 
-    let encryptedKeychainKey: EncyptResult;
+    let encryptedKeychainKey: EncryptResult;
 
     encryptedKeychainKey = encrypt(keychainKey);
 
