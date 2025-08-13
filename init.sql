@@ -26,7 +26,7 @@ create table passwords (
   password_id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
   password_hash TEXT NOT NULL,
   salt TEXT NOT NULL,
-  
+
   user_id uuid references users(user_id) NOT NULL,
 
   created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP

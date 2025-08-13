@@ -80,7 +80,9 @@ export async function initServer(): Promise<void> {
         reject(err);
         return;
       }
-      logger.info(`Listening on port ${config.port}, address: ${address}`);
+      const startLogStr = `Listening on port ${config.port}, address: ${address}`;
+      process.stdout.write(`${startLogStr}\n`);
+      logger.info(startLogStr);
       resolve();
     });
   });

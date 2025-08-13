@@ -47,6 +47,8 @@ export const TIME_UNIT_MAP: Record<TIME_UNIT, string> = {
 
 export class PingService {
 
+  /* "2024-08-17T05:48:18.983Z" */
+
   static async getPingStats(params: GetPingStatsParams = {}): Promise<PingStatDto[]> {
     let timeBucketQuery: GetTimeBucketQueryResult;
     let pingStatDtos: PingStatDto[];
@@ -56,6 +58,9 @@ export class PingService {
     if(params.start !== undefined) {
       startParam = parseStartParam(params.start);
       startDate = new Date(Date.now() - startParamToMs(startParam));
+      // startDate = new Date(
+      //   (new Date('2024-08-17T05:48:18.983Z')).valueOf() - startParamToMs(startParam)
+      // );
       console.log({
         startParam,
         startDate,
@@ -120,7 +125,7 @@ export class PingService {
     lastPing = await this.getLastPing();
 
     let lastPingTimestamp = getISOString(lastPing.created_at);
-    
+
     queryParts = [
       'select * from ping p',
       `where p.created_at BETWEEN
@@ -328,7 +333,8 @@ function getTimeBucketQuery(opts: GetTimeBucketQueryOpts): GetTimeBucketQueryRes
   let queryStr: string;
   let dateBinVal: number;
   let dateBinUnit: TimeBucketUnit;
-  let baseQuery: string;
+  let baseQueryParts: string[];
+  // let baseQuery: string;
   let queryStrParts: string[];
   let startQueryStr: string;
 
@@ -339,16 +345,33 @@ function getTimeBucketQuery(opts: GetTimeBucketQueryOpts): GetTimeBucketQueryRes
 
   dateBinVal = opts.dateBinVal ?? 5;
   dateBinUnit = opts.dateBinUnit ?? 'min';
-  baseQuery = `
-    select date_bin('${dateBinVal} ${dateBinUnit}', p.created_at, '2001-9-11') as time_bucket,
-      count(p.ping_id),
-      round(avg(p."time")*1000)/1000 as avg,
-      max(p."time"),
-      percentile_cont(0.5) within group (order by p.time) as median
-    from ping p
-  `;
+  baseQueryParts = [
+    `select date_bin('${dateBinVal} ${dateBinUnit}', p.created_at, '2001-9-11') as time_bucket,`,
+    ` count(p.ping_id),`,
+    ` avg(p."time") as avg,`,
+    // ` round(avg(p."time")*1000)/1000 as avg,`,
+    ` max(p."time"),`,
+    ` percentile_cont(0.5) within group (order by p.time) as median`,
+    `from ping p`,
+  ];
+  // baseQuery = [
+  //   `select date_bin('${dateBinVal} ${dateBinUnit}', p.created_at, '2001-9-11') as time_bucket,`,
+  //   ` count(p.ping_id),`,
+  //   ` round(avg(p."time")*1000)/1000 as avg,`,
+  //   ` max(p."time"),`,
+  //   ` percentile_cont(0.5) within group (order by p.time) as median`,
+  //   `from ping p`,
+  // ].join('\n');
+  // baseQuery = `
+  //   select date_bin('${dateBinVal} ${dateBinUnit}', p.created_at, '2001-9-11') as time_bucket,
+  //     count(p.ping_id),
+  //     round(avg(p."time")*1000)/1000 as avg,
+  //     max(p."time"),
+  //     percentile_cont(0.5) within group (order by p.time) as median
+  //   from ping p
+  // `;
   queryStrParts = [
-    baseQuery,
+    ...baseQueryParts,
   ];
 
   hasWhereClause = false;
@@ -356,7 +379,7 @@ function getTimeBucketQuery(opts: GetTimeBucketQueryOpts): GetTimeBucketQueryRes
   if(opts.addrType !== undefined) {
     queryParams.push(opts.addrType)
     queryStrParts.push(`
-      left join ping_addr pr on pr.ping_addr_id = p.addr_id
+      inner join ping_addr pr on pr.ping_addr_id = p.addr_id
         where pr.addr_type = $${queryParams.length}
     `);
     hasWhereClause = true;
